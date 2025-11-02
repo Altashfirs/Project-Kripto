@@ -1,0 +1,5 @@
+{
+  "name": "Kripto-Suite",
+  "description": "A web application demonstrating various cryptographic techniques including Scrypt for login, super-encryption for text (Atbash + Serpent), ElGamal for files, and DCT-based steganography for images.",
+  "requestFramePermissions": []
+}
