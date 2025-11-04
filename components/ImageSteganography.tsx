@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Card from './Card';
 import Button from './Button';
-// Fix: Import the Input component to resolve 'Cannot find name' errors.
 import Input from './Input';
 import { dctSteganographyHide, dctSteganographyReveal } from '../services/cryptoService';
 
@@ -67,6 +66,16 @@ const ImageSteganography: React.FC = () => {
             setIsLoading(false);
         }
     };
+
+    const handleDownload = () => {
+        if (!stegoImage) return;
+        const link = document.createElement('a');
+        link.href = stegoImage;
+        link.download = 'stego-image.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
     
     const tabStyle = (active: boolean) => active ? 'border-accent text-accent' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-color';
     const [activeTab, setActiveTab] = useState('hide');
@@ -101,7 +110,12 @@ const ImageSteganography: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-text-secondary mb-2">Stego-Image (with hidden message)</h3>
-                                {stegoImage ? <img src={stegoImage} alt="Stego" className="rounded-md border border-border-color" /> : <div className="h-48 bg-secondary rounded-md flex items-center justify-center text-text-secondary">Result will appear here</div>}
+                                {stegoImage ? (
+                                    <div>
+                                        <img src={stegoImage} alt="Stego" className="rounded-md border border-border-color" />
+                                        <Button onClick={handleDownload} className="mt-2 w-full md:w-auto">Download Stego-Image</Button>
+                                    </div>
+                                ) : <div className="h-48 bg-secondary rounded-md flex items-center justify-center text-text-secondary">Result will appear here</div>}
                             </div>
                         </div>
                     </div>

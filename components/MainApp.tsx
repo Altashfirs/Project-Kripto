@@ -1,8 +1,8 @@
-
 import React from 'react';
 import TextEncryption from './TextEncryption';
 import FileEncryption from './FileEncryption';
 import ImageSteganography from './ImageSteganography';
+import DataVault from './DataVault';
 import Button from './Button';
 
 interface MainAppProps {
@@ -22,6 +22,7 @@ const MainApp: React.FC<MainAppProps> = ({ username, onLogout }) => {
             </header>
 
             <main className="space-y-8">
+                <DataVault username={username} />
                 <TextEncryption />
                 <FileEncryption />
                 <ImageSteganography />

@@ -32,69 +32,95 @@ export const atbashCipher = (text: string): string => {
 };
 
 /**
- * MOCK Serpent: Simulates the Serpent block cipher using a key.
+ * MOCK Serpent Encryption: Simulates the Serpent block cipher using a key.
  * This is a simple XOR cipher for demonstration. Real Serpent is far more complex.
- * @param text The text to encrypt/decrypt.
+ * @param text The text to encrypt.
  * @param key The secret key.
- * @returns The transformed text.
+ * @returns The encrypted text as a hex string.
  */
-export const serpentMock = (text: string, key: string): string => {
+export const serpentMockEncrypt = (text: string, key: string): string => {
     if (!key) return text;
-    let output = '';
+    let hexOutput = '';
     for (let i = 0; i < text.length; i++) {
         const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-        output += String.fromCharCode(charCode);
+        hexOutput += charCode.toString(16).padStart(4, '0');
     }
-    return output;
+    return hexOutput;
 };
+
+/**
+ * MOCK Serpent Decryption: Reverses the mock Serpent encryption from a hex string.
+ * @param hexInput The encrypted hex string.
+ * @param key The secret key.
+ * @returns The decrypted text.
+ */
+export const serpentMockDecrypt = (hexInput: string, key: string): string => {
+    if (!key) return hexInput;
+    // Return early if not a valid hex string (e.g. attempting to decrypt unencrypted data)
+    if (/[^0-9a-fA-F]/.test(hexInput) || hexInput.length % 4 !== 0) {
+        return hexInput;
+    }
+    let textOutput = '';
+    for (let i = 0; i < hexInput.length; i += 4) {
+        const hex = hexInput.substring(i, i + 4);
+        const charCode = parseInt(hex, 16);
+        const originalCharCode = charCode ^ key.charCodeAt((i / 4) % key.length);
+        textOutput += String.fromCharCode(originalCharCode);
+    }
+    return textOutput;
+};
+
 
 /**
  * Super Encryption: Combines Atbash and mock Serpent ciphers.
  * @param text The plaintext.
  * @param key The Serpent key.
- * @returns The ciphertext.
+ * @returns The ciphertext (hex string from Serpent).
  */
 export const superEncrypt = (text: string, key: string): string => {
     const atbashResult = atbashCipher(text);
-    return serpentMock(atbashResult, key);
+    return serpentMockEncrypt(atbashResult, key);
 };
 
 /**
  * Super Decryption: Reverses the super encryption process.
- * @param ciphertext The ciphertext.
+ * @param ciphertext The hex ciphertext.
  * @param key The Serpent key.
  * @returns The plaintext.
  */
 export const superDecrypt = (ciphertext: string, key: string): string => {
-    const serpentResult = serpentMock(ciphertext, key);
+    const serpentResult = serpentMockDecrypt(ciphertext, key);
     return atbashCipher(serpentResult);
 };
 
 /**
- * MOCK ElGamal Encryption: Simulates ElGamal file encryption on binary data.
- * It applies a simple byte shift.
+ * MOCK ElGamal Encryption: Simulates ElGamal file encryption on binary data using a key.
+ * It applies a simple XOR cipher.
  * @param fileBytes The content of the file as a Uint8Array.
+ * @param key The secret key.
  * @returns The "encrypted" file content as a Uint8Array.
  */
-export const elgamalMockEncrypt = (fileBytes: Uint8Array): Uint8Array => {
+export const elgamalMockEncrypt = (fileBytes: Uint8Array, key: string): Uint8Array => {
+    if (!key) return fileBytes;
     const encryptedBytes = new Uint8Array(fileBytes.length);
     for (let i = 0; i < fileBytes.length; i++) {
-        // Simple byte shift, wrapping around at 256
-        encryptedBytes[i] = (fileBytes[i] + 5) % 256;
+        encryptedBytes[i] = fileBytes[i] ^ key.charCodeAt(i % key.length);
     }
     return encryptedBytes;
 };
 
 /**
- * MOCK ElGamal Decryption: Simulates ElGamal file decryption on binary data.
+ * MOCK ElGamal Decryption: Simulates ElGamal file decryption on binary data using a key.
  * @param encryptedBytes The encrypted file content as a Uint8Array.
+ * @param key The secret key.
  * @returns The original file content as a Uint8Array.
  */
-export const elgamalMockDecrypt = (encryptedBytes: Uint8Array): Uint8Array => {
+export const elgamalMockDecrypt = (encryptedBytes: Uint8Array, key: string): Uint8Array => {
+    if (!key) return encryptedBytes;
+    // XOR is symmetric, so decryption is the same operation as encryption
     const decryptedBytes = new Uint8Array(encryptedBytes.length);
     for (let i = 0; i < encryptedBytes.length; i++) {
-        // Reverse the byte shift, wrapping around correctly for negative numbers
-        decryptedBytes[i] = (encryptedBytes[i] - 5 + 256) % 256;
+        decryptedBytes[i] = encryptedBytes[i] ^ key.charCodeAt(i % key.length);
     }
     return decryptedBytes;
 };

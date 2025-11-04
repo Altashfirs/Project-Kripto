@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { BrowserProvider, ethers, Eip1193Provider } from 'ethers';
 import Button from './Button';
 import Card from './Card';
 import Input from './Input';
 import { scryptMock } from '../services/cryptoService';
-import { User } from '../types';
+import { supabase } from '../services/supabaseClient';
 
 declare global {
     interface Window {
@@ -16,23 +17,17 @@ interface LoginPageProps {
     onLoginSuccess: (username: string) => void;
 }
 
-// Simple in-memory "database" for Scrypt users
-const initialDb: User[] = [];
-
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
-    // State for login method selection
     const [activeMethod, setActiveMethod] = useState<'web3' | 'scrypt'>('web3');
 
-    // State for Scrypt login/registration
-    const [usersDb, setUsersDb] = useState<User[]>(initialDb);
     const [scryptMode, setScryptMode] = useState<'login' | 'register'>('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const SALT = "static-salt-for-demo-purposes"; // In a real app, this should be unique per user
+    const SALT = "static-salt-for-demo-purposes";
 
     const clearForm = (clearUsername = true) => {
         setError('');
@@ -87,6 +82,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         setSuccessMessage('');
         setIsLoading(true);
 
+        if (!supabase) {
+            setError('Supabase is not configured. Please add your project URL and key to the supabaseClient file.');
+            setIsLoading(false);
+            return;
+        }
+
         if (!username || !password) {
             setError('Username and password are required.');
             setIsLoading(false);
@@ -95,25 +96,53 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
         try {
             if (scryptMode === 'register') {
-                if (usersDb.find(u => u.username === username)) {
+                // Check if user exists in Supabase
+                const { data: existingUser, error: selectError } = await supabase
+                    .from('users')
+                    .select('username')
+                    .eq('username', username)
+                    .single();
+
+                if (selectError && selectError.code !== 'PGRST116') { // PGRST116: 'not found'
+                    throw selectError;
+                }
+                if (existingUser) {
                     throw new Error('Username already exists.');
                 }
+
+                // 1. Hash with Scrypt
                 const scryptHash = await scryptMock(password, SALT);
-                const newUser = { username, scryptHash };
-                setUsersDb([...usersDb, newUser]);
                 
-                // Switch to login mode with a success message
+                // 2. Insert into Supabase
+                const { error: insertError } = await supabase
+                    .from('users')
+                    .insert([{ username, encrypted_hash: scryptHash }]);
+                
+                if (insertError) throw insertError;
+
                 setSuccessMessage('Registration successful! Please log in.');
                 setScryptMode('login');
-                setPassword(''); // Clear password field for security
+                setPassword('');
 
             } else { // Login mode
-                const user = usersDb.find(u => u.username === username);
-                if (!user) {
-                    throw new Error('User not found. Please register first.');
+                // 1. Fetch user from Supabase
+                const { data: user, error: selectError } = await supabase
+                    .from('users')
+                    .select('encrypted_hash')
+                    .eq('username', username)
+                    .single();
+
+                if (selectError || !user) {
+                     throw new Error('User not found. Please register first.');
                 }
-                const scryptHash = await scryptMock(password, SALT);
-                if (scryptHash !== user.scryptHash) {
+                
+                const storedHash = user.encrypted_hash;
+                
+                // 2. Hash the provided password locally
+                const scryptHashToCompare = await scryptMock(password, SALT);
+
+                // 3. Compare
+                if (storedHash !== scryptHashToCompare) {
                     throw new Error('Incorrect password.');
                 }
                 onLoginSuccess(username);

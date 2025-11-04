@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import Card from './Card';
 import Button from './Button';
+import Input from './Input';
 import { elgamalMockEncrypt, elgamalMockDecrypt } from '../services/cryptoService';
 
 const FileEncryption: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
+    const [key, setKey] = useState<string>('');
     const [feedback, setFeedback] = useState<string>('');
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,6 +21,10 @@ const FileEncryption: React.FC = () => {
             setFeedback('Please select a file first.');
             return;
         }
+        if (!key) {
+            setFeedback('Please provide a secret key.');
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -31,14 +37,12 @@ const FileEncryption: React.FC = () => {
             const contentBytes = new Uint8Array(arrayBuffer);
             const isEncrypt = operation === 'encrypt';
             
-            // Check if trying to decrypt a non-encrypted file (simple check)
-            // A more robust system would have a magic number or header.
             if (!isEncrypt && !file.name.toLowerCase().endsWith('.elgamal')) {
                  setFeedback('Error: This does not appear to be an ElGamal encrypted file. Decryption aborted.');
                  return;
             }
 
-            const resultBytes = isEncrypt ? elgamalMockEncrypt(contentBytes) : elgamalMockDecrypt(contentBytes);
+            const resultBytes = isEncrypt ? elgamalMockEncrypt(contentBytes, key) : elgamalMockDecrypt(contentBytes, key);
 
             const blob = new Blob([resultBytes], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
@@ -61,12 +65,11 @@ const FileEncryption: React.FC = () => {
         reader.onerror = () => {
             setFeedback('Error reading file.');
         };
-        // Read the file as a binary buffer, not as text
         reader.readAsArrayBuffer(file);
-    }, [file]);
+    }, [file, key]);
 
     return (
-        <Card title="File Encryption (ElGamal)" description="Encrypts and decrypts files using a mock ElGamal implementation. Works with any file type.">
+        <Card title="File Encryption (ElGamal)" description="Encrypts and decrypts files using a mock ElGamal implementation with a secret key. Works with any file type.">
             <div className="p-6 space-y-4">
                 <div>
                     <label htmlFor="file-upload" className="block text-sm font-medium text-text-secondary mb-2">Select File</label>
@@ -80,6 +83,16 @@ const FileEncryption: React.FC = () => {
                         </label>
                     </div> 
                 </div>
+
+                <Input
+                    id="elgamal-key"
+                    label="Secret Key"
+                    type="password"
+                    value={key}
+                    onChange={(e) => setKey(e.target.value)}
+                    placeholder="Enter your secret key"
+                    required
+                />
 
                 {feedback && <p className="text-sm text-accent break-words">{feedback}</p>}
 
