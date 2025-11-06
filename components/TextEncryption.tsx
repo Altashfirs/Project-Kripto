@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Card from './Card';
 import Button from './Button';
@@ -13,7 +12,7 @@ const TextEncryption: React.FC = () => {
 
     const handleProcess = () => {
         if (!inputText || !key) {
-            setOutputText('Please provide both text and a key.');
+            setOutputText('Please provide both text and an encryption key.');
             return;
         }
         if (mode === 'encrypt') {
@@ -29,7 +28,7 @@ const TextEncryption: React.FC = () => {
     }
 
     return (
-        <Card title="Super Encryption (Text)" description="Encrypts text using a combination of Atbash Cipher and a mock Serpent algorithm.">
+        <Card title="Encrypted Channel" description="Encrypt sensitive messages for point-to-point secure communication. Uses a combination of Atbash and a simulated Serpent cipher.">
             <div className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -56,7 +55,7 @@ const TextEncryption: React.FC = () => {
 
                 <Input
                     id="serpent-key"
-                    label="Secret Key"
+                    label="Encryption Key"
                     type="password"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}

@@ -12,7 +12,7 @@ const FileEncryption: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
-            setFeedback(`Selected file: ${e.target.files[0].name}`);
+            setFeedback(`File selected: ${e.target.files[0].name}`);
         }
     };
 
@@ -22,7 +22,7 @@ const FileEncryption: React.FC = () => {
             return;
         }
         if (!key) {
-            setFeedback('Please provide a secret key.');
+            setFeedback('Please provide an encryption key.');
             return;
         }
 
@@ -63,16 +63,16 @@ const FileEncryption: React.FC = () => {
             setFeedback(`File successfully ${operation}ed and downloaded as ${downloadName}.`);
         };
         reader.onerror = () => {
-            setFeedback('Error reading file.');
+            setFeedback('Failed to read file.');
         };
         reader.readAsArrayBuffer(file);
     }, [file, key]);
 
     return (
-        <Card title="File Encryption (ElGamal)" description="Encrypts and decrypts files using a mock ElGamal implementation with a secret key. Works with any file type.">
+        <Card title="File Obfuscation" description="Disguise and secure any file using a simulated ElGamal implementation. Ideal for securing files before transmission.">
             <div className="p-6 space-y-4">
                 <div>
-                    <label htmlFor="file-upload" className="block text-sm font-medium text-text-secondary mb-2">Select File</label>
+                    <label htmlFor="file-upload" className="block text-sm font-medium text-text-secondary mb-2">Select a Document</label>
                     <div className="flex items-center justify-center w-full">
                         <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-border-color border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-border-color">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -86,7 +86,7 @@ const FileEncryption: React.FC = () => {
 
                 <Input
                     id="elgamal-key"
-                    label="Secret Key"
+                    label="Encryption Key"
                     type="password"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
@@ -97,8 +97,8 @@ const FileEncryption: React.FC = () => {
                 {feedback && <p className="text-sm text-accent break-words">{feedback}</p>}
 
                 <div className="flex flex-wrap gap-4">
-                    <Button onClick={() => processFile('encrypt')} disabled={!file}>Encrypt File</Button>
-                    <Button onClick={() => processFile('decrypt')} disabled={!file} variant="secondary">Decrypt File</Button>
+                    <Button onClick={() => processFile('encrypt')} disabled={!file}>Encrypt Document</Button>
+                    <Button onClick={() => processFile('decrypt')} disabled={!file} variant="secondary">Decrypt Document</Button>
                 </div>
             </div>
         </Card>
