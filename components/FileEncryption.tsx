@@ -1,13 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Card from './Card';
 import Button from './Button';
 import Input from './Input';
-import { elgamalMockEncrypt, elgamalMockDecrypt } from '../services/cryptoService';
+import { elgamalEncrypt, elgamalDecrypt } from '../services/cryptoService';
 
 const FileEncryption: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [key, setKey] = useState<string>('');
     const [feedback, setFeedback] = useState<string>('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -16,60 +17,80 @@ const FileEncryption: React.FC = () => {
         }
     };
 
-    const processFile = useCallback((operation: 'encrypt' | 'decrypt') => {
+    const processFile = async (operation: 'encrypt' | 'decrypt') => {
         if (!file) {
             setFeedback('Please select a file first.');
             return;
         }
         if (!key) {
-            setFeedback('Please provide an encryption key.');
+            setFeedback('Please provide an encryption key (must be a number for Rail Fence).');
             return;
         }
+        
+        setIsProcessing(true);
+        setFeedback(`Processing file... This may take a moment for large files.`);
 
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const arrayBuffer = event.target?.result as ArrayBuffer;
-            if (!arrayBuffer) {
-                setFeedback('Could not read file content.');
-                return;
+        reader.onload = async (event) => {
+            try {
+                const arrayBuffer = event.target?.result as ArrayBuffer;
+                if (!arrayBuffer) {
+                    throw new Error('Could not read file content.');
+                }
+                
+                const contentBytes = new Uint8Array(arrayBuffer);
+                const isEncrypt = operation === 'encrypt';
+
+                const resultBytes = isEncrypt 
+                    ? await elgamalEncrypt(contentBytes, key) 
+                    : await elgamalDecrypt(contentBytes, key);
+
+                const blob = new Blob([resultBytes], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                const originalName = file.name;
+                let downloadName = '';
+
+                if (isEncrypt) {
+                    downloadName = `${originalName}.rfc`;
+                } else {
+                    if (originalName.toLowerCase().endsWith('.rfc')) {
+                        downloadName = originalName.slice(0, -'.rfc'.length);
+                    } else {
+                         downloadName = `decrypted_${originalName}`;
+                    }
+                }
+                
+                // Fallback for empty filename
+                if (!downloadName) {
+                    downloadName = 'decrypted_file';
+                }
+
+                a.download = downloadName;
+
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                setFeedback(`File successfully ${operation}ed and downloaded as ${downloadName}.`);
+
+            } catch (error: any) {
+                setFeedback(`Error: ${error.message || 'An unknown error occurred during the operation.'}`);
+            } finally {
+                setIsProcessing(false);
             }
-            
-            const contentBytes = new Uint8Array(arrayBuffer);
-            const isEncrypt = operation === 'encrypt';
-            
-            if (!isEncrypt && !file.name.toLowerCase().endsWith('.elgamal')) {
-                 setFeedback('Error: This does not appear to be an ElGamal encrypted file. Decryption aborted.');
-                 return;
-            }
-
-            const resultBytes = isEncrypt ? elgamalMockEncrypt(contentBytes, key) : elgamalMockDecrypt(contentBytes, key);
-
-            const blob = new Blob([resultBytes], { type: 'application/octet-stream' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-
-            const downloadName = isEncrypt
-                ? `${file.name}.elgamal`
-                : file.name.toLowerCase().endsWith('.elgamal')
-                    ? file.name.slice(0, -'.elgamal'.length)
-                    : `decrypted_${file.name}`;
-            a.download = downloadName;
-
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            setFeedback(`File successfully ${operation}ed and downloaded as ${downloadName}.`);
         };
         reader.onerror = () => {
             setFeedback('Failed to read file.');
+            setIsProcessing(false);
         };
         reader.readAsArrayBuffer(file);
-    }, [file, key]);
+    };
 
     return (
-        <Card title="File Obfuscation" description="Disguise and secure any file using a simulated ElGamal implementation. Ideal for securing files before transmission.">
+        <Card title="File Obfuscation" description="Disguise and secure any file using the Rail Fence cipher. The key must be a number representing the number of 'rails'.">
             <div className="p-6 space-y-4">
                 <div>
                     <label htmlFor="file-upload" className="block text-sm font-medium text-text-secondary mb-2">Select a Document</label>
@@ -86,19 +107,19 @@ const FileEncryption: React.FC = () => {
 
                 <Input
                     id="elgamal-key"
-                    label="Encryption Key"
-                    type="password"
+                    label="Encryption Key (Number of Rails)"
+                    type="number"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
-                    placeholder="Enter your secret key"
+                    placeholder="e.g., 3"
                     required
                 />
 
                 {feedback && <p className="text-sm text-accent break-words">{feedback}</p>}
 
                 <div className="flex flex-wrap gap-4">
-                    <Button onClick={() => processFile('encrypt')} disabled={!file}>Encrypt Document</Button>
-                    <Button onClick={() => processFile('decrypt')} disabled={!file} variant="secondary">Decrypt Document</Button>
+                    <Button onClick={() => processFile('encrypt')} disabled={!file || isProcessing}>{isProcessing ? 'Encrypting...' : 'Encrypt Document'}</Button>
+                    <Button onClick={() => processFile('decrypt')} disabled={!file || isProcessing} variant="secondary">{isProcessing ? 'Decrypting...' : 'Decrypt Document'}</Button>
                 </div>
             </div>
         </Card>

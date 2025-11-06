@@ -10,15 +10,15 @@ const TextEncryption: React.FC = () => {
     const [outputText, setOutputText] = useState('');
     const [mode, setMode] = useState<'encrypt' | 'decrypt'>('encrypt');
 
-    const handleProcess = () => {
+    const handleProcess = async () => {
         if (!inputText || !key) {
             setOutputText('Please provide both text and an encryption key.');
             return;
         }
         if (mode === 'encrypt') {
-            setOutputText(superEncrypt(inputText, key));
+            setOutputText(await superEncrypt(inputText, key));
         } else {
-            setOutputText(superDecrypt(inputText, key));
+            setOutputText(await superDecrypt(inputText, key));
         }
     };
     

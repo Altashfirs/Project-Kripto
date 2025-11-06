@@ -73,7 +73,7 @@ const DataVault: React.FC<DataVaultProps> = ({ username }) => {
         setIsLoading(true);
 
         try {
-            const encrypted_content = serpentMockEncrypt(textContent, secretKey);
+            const encrypted_content = await serpentMockEncrypt(textContent, secretKey);
 
             const { error: insertError } = await supabase.from('vault_items').insert({
                 username,
@@ -119,14 +119,14 @@ const DataVault: React.FC<DataVaultProps> = ({ username }) => {
         setIsLoading(false);
     };
 
-    const handleDecrypt = () => {
+    const handleDecrypt = async () => {
         clearMessages();
         if (!selectedItem || !decryptionKey) {
             setError('Please provide the encryption key to decrypt.');
             return;
         }
         try {
-            const decrypted = serpentMockDecrypt(selectedItem.encrypted_content, decryptionKey);
+            const decrypted = await serpentMockDecrypt(selectedItem.encrypted_content, decryptionKey);
              // A simple check to see if decryption likely failed
             if (decrypted === selectedItem.encrypted_content) {
                 throw new Error("Decryption failed. The key is likely incorrect.");

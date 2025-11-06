@@ -1,6 +1,7 @@
 // --- IMPORTANT ---
 // These functions are for educational and demonstration purposes only.
-// They are NOT cryptographically secure and should NOT be used in production.
+// The mock functions are NOT cryptographically secure and should NOT be used in production.
+// The implementations are functional demonstrations but lack production-grade features.
 
 /**
  * MOCK Scrypt: Simulates a Scrypt key derivation function.
@@ -12,7 +13,7 @@
 export const scryptMock = async (password: string, salt: string): Promise<string> => {
     const textEncoder = new TextEncoder();
     const data = textEncoder.encode(password + salt);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashBuffer = await crypto.subtle.digest('SHA-384', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
@@ -32,39 +33,42 @@ export const atbashCipher = (text: string): string => {
 };
 
 /**
- * MOCK Serpent Encryption: Simulates the Serpent block cipher using a key.
- * This is a simple XOR cipher for demonstration. Real Serpent is far more complex.
+ * MOCK Serpent Encryption: Replaced with Vigenère Cipher.
+ * This is a simple byte-wise Vigenère cipher for demonstration.
  * @param text The text to encrypt.
- * @param key The secret key.
+ * @param key The secret key (keyword).
  * @returns The encrypted text as a hex string.
  */
-export const serpentMockEncrypt = (text: string, key: string): string => {
+export const serpentMockEncrypt = async (text: string, key: string): Promise<string> => {
     if (!key) return text;
     let hexOutput = '';
     for (let i = 0; i < text.length; i++) {
-        const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-        hexOutput += charCode.toString(16).padStart(4, '0');
+        const textCharCode = text.charCodeAt(i);
+        const keyCharCode = key.charCodeAt(i % key.length);
+        const encryptedCharCode = (textCharCode + keyCharCode) % 256;
+        hexOutput += encryptedCharCode.toString(16).padStart(2, '0');
     }
     return hexOutput;
 };
 
 /**
- * MOCK Serpent Decryption: Reverses the mock Serpent encryption from a hex string.
+ * MOCK Serpent Decryption: Replaced with Vigenère Cipher decryption.
  * @param hexInput The encrypted hex string.
- * @param key The secret key.
+ * @param key The secret key (keyword).
  * @returns The decrypted text.
  */
-export const serpentMockDecrypt = (hexInput: string, key: string): string => {
+export const serpentMockDecrypt = async (hexInput: string, key: string): Promise<string> => {
     if (!key) return hexInput;
     // Return early if not a valid hex string (e.g. attempting to decrypt unencrypted data)
-    if (/[^0-9a-fA-F]/.test(hexInput) || hexInput.length % 4 !== 0) {
+    if (/[^0-9a-fA-F]/.test(hexInput) || hexInput.length % 2 !== 0) {
         return hexInput;
     }
     let textOutput = '';
-    for (let i = 0; i < hexInput.length; i += 4) {
-        const hex = hexInput.substring(i, i + 4);
-        const charCode = parseInt(hex, 16);
-        const originalCharCode = charCode ^ key.charCodeAt((i / 4) % key.length);
+    for (let i = 0; i < hexInput.length; i += 2) {
+        const hex = hexInput.substring(i, i + 2);
+        const encryptedCharCode = parseInt(hex, 16);
+        const keyCharCode = key.charCodeAt((i / 2) % key.length);
+        const originalCharCode = (encryptedCharCode - keyCharCode + 256) % 256;
         textOutput += String.fromCharCode(originalCharCode);
     }
     return textOutput;
@@ -72,57 +76,109 @@ export const serpentMockDecrypt = (hexInput: string, key: string): string => {
 
 
 /**
- * Super Encryption: Combines Atbash and mock Serpent ciphers.
+ * Super Encryption: Combines Atbash and Vigenère ciphers.
  * @param text The plaintext.
- * @param key The Serpent key.
- * @returns The ciphertext (hex string from Serpent).
+ * @param key The Vigenère key.
+ * @returns The ciphertext (hex string from Vigenère).
  */
-export const superEncrypt = (text: string, key: string): string => {
+export const superEncrypt = async (text: string, key: string): Promise<string> => {
     const atbashResult = atbashCipher(text);
-    return serpentMockEncrypt(atbashResult, key);
+    return await serpentMockEncrypt(atbashResult, key);
 };
 
 /**
  * Super Decryption: Reverses the super encryption process.
  * @param ciphertext The hex ciphertext.
- * @param key The Serpent key.
+ * @param key The Vigenère key.
  * @returns The plaintext.
  */
-export const superDecrypt = (ciphertext: string, key: string): string => {
-    const serpentResult = serpentMockDecrypt(ciphertext, key);
+export const superDecrypt = async (ciphertext: string, key: string): Promise<string> => {
+    const serpentResult = await serpentMockDecrypt(ciphertext, key);
     return atbashCipher(serpentResult);
 };
 
+// --- Rail Fence Cipher (Byte-wise) ---
+
 /**
- * MOCK ElGamal Encryption: Simulates ElGamal file encryption on binary data using a key.
- * It applies a simple XOR cipher.
+ * Rail Fence Encryption: Encrypts file data using a byte-wise Rail Fence cipher.
+ * Replaces the original ElGamal implementation.
  * @param fileBytes The content of the file as a Uint8Array.
- * @param key The secret key.
- * @returns The "encrypted" file content as a Uint8Array.
+ * @param key The number of rails, as a string.
+ * @returns The encrypted file content as a Uint8Array.
  */
-export const elgamalMockEncrypt = (fileBytes: Uint8Array, key: string): Uint8Array => {
-    if (!key) return fileBytes;
-    const encryptedBytes = new Uint8Array(fileBytes.length);
-    for (let i = 0; i < fileBytes.length; i++) {
-        encryptedBytes[i] = fileBytes[i] ^ key.charCodeAt(i % key.length);
+export const elgamalEncrypt = async (fileBytes: Uint8Array, key: string): Promise<Uint8Array> => {
+    const rails = parseInt(key, 10);
+    if (!key || isNaN(rails) || rails <= 1) {
+        return fileBytes;
     }
-    return encryptedBytes;
+
+    const fence: number[][] = Array.from({ length: rails }, () => []);
+    let rail = 0;
+    let direction = 1;
+
+    for (const byte of fileBytes) {
+        fence[rail].push(byte);
+        rail += direction;
+        if (rail === rails - 1 || rail === 0) {
+            direction *= -1;
+        }
+    }
+
+    const encryptedBytesList = fence.flat();
+    return new Uint8Array(encryptedBytesList);
 };
 
 /**
- * MOCK ElGamal Decryption: Simulates ElGamal file decryption on binary data using a key.
+ * Rail Fence Decryption: Decrypts file data from a byte-wise Rail Fence cipher.
+ * Replaces the original ElGamal implementation.
  * @param encryptedBytes The encrypted file content as a Uint8Array.
- * @param key The secret key.
+ * @param key The number of rails, as a string.
  * @returns The original file content as a Uint8Array.
  */
-export const elgamalMockDecrypt = (encryptedBytes: Uint8Array, key: string): Uint8Array => {
-    if (!key) return encryptedBytes;
-    // XOR is symmetric, so decryption is the same operation as encryption
-    const decryptedBytes = new Uint8Array(encryptedBytes.length);
-    for (let i = 0; i < encryptedBytes.length; i++) {
-        decryptedBytes[i] = encryptedBytes[i] ^ key.charCodeAt(i % key.length);
+export const elgamalDecrypt = async (encryptedBytes: Uint8Array, key: string): Promise<Uint8Array> => {
+    const rails = parseInt(key, 10);
+    if (!key || isNaN(rails) || rails <= 1) {
+        return encryptedBytes;
     }
-    return decryptedBytes;
+
+    const len = encryptedBytes.length;
+    // Create a fence with null placeholders to map the structure
+    const fence: (number | null)[][] = Array.from({ length: rails }, () => Array(len).fill(null));
+    
+    // Determine where bytes should go
+    let rail = 0;
+    let direction = 1;
+    for (let i = 0; i < len; i++) {
+        fence[rail][i] = 0; // Mark path with a placeholder
+        rail += direction;
+        if (rail === rails - 1 || rail === 0) {
+            direction *= -1;
+        }
+    }
+
+    // Fill the fence with the encrypted bytes row by row
+    let index = 0;
+    for (let r = 0; r < rails; r++) {
+        for (let c = 0; c < len; c++) {
+            if (fence[r][c] === 0) {
+                fence[r][c] = encryptedBytes[index++];
+            }
+        }
+    }
+    
+    // Read the fence in zig-zag order to decrypt
+    const decryptedBytes: number[] = [];
+    rail = 0;
+    direction = 1;
+    for (let i = 0; i < len; i++) {
+        decryptedBytes.push(fence[rail][i]!);
+        rail += direction;
+        if (rail === rails - 1 || rail === 0) {
+            direction *= -1;
+        }
+    }
+
+    return new Uint8Array(decryptedBytes);
 };
 
 
@@ -135,27 +191,32 @@ const messageToBinary = (message: string): string => {
     }).join('') + '1111111111111110'; // Delimiter
 };
 
-// Hides a binary message in the image data.
+// Hides a binary message in the image data using Green and Blue channels.
 const hideMessage = (imageData: ImageData, binaryMessage: string) => {
     const data = imageData.data;
+    // 2 bits can be hidden per pixel (in G and B channels)
+    if (binaryMessage.length > (data.length / 4) * 2) {
+        throw new Error("Message is too long for this image.");
+    }
+
     for (let i = 0; i < binaryMessage.length; i++) {
-        if ((i + 1) * 4 > data.length) {
-            throw new Error("Message is too long for this image.");
-        }
-        const pixelIndex = i * 4;
-        // Modify the LSB of the blue channel
-        data[pixelIndex + 2] = (data[pixelIndex + 2] & 0xFE) | parseInt(binaryMessage[i], 2);
+        const pixelIndex = Math.floor(i / 2) * 4;
+        // i=0 -> channel=1 (G); i=1 -> channel=2 (B); i=2 -> channel=1 (G of next pixel)
+        const channelIndex = 1 + (i % 2); 
+        data[pixelIndex + channelIndex] = (data[pixelIndex + channelIndex] & 0xFE) | parseInt(binaryMessage[i], 2);
     }
     return imageData;
 };
 
-// Reveals a binary message from the image data.
+// Reveals a binary message from the image data using Green and Blue channels.
 const revealMessage = (imageData: ImageData): string => {
     const data = imageData.data;
     let binaryMessage = '';
     for (let i = 0; i < data.length; i += 4) {
-        const lsb = data[i + 2] & 1;
-        binaryMessage += lsb;
+        // Extract LSB from Green channel
+        binaryMessage += (data[i + 1] & 1);
+        // Extract LSB from Blue channel
+        binaryMessage += (data[i + 2] & 1);
     }
 
     const delimiterIndex = binaryMessage.indexOf('1111111111111110');
