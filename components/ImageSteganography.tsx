@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from './Card';
 import Button from './Button';
 import Input from './Input';
-import { dctSteganographyHide, dctSteganographyReveal } from '../services/cryptoService';
+import { steganographyHide, steganographyReveal } from '../services/cryptoService';
 
 const ImageSteganography: React.FC = () => {
     const [coverImage, setCoverImage] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const ImageSteganography: React.FC = () => {
         setError(null);
         setRevealedMessage(null);
         try {
-            const resultImage = await dctSteganographyHide(coverImage, message);
+            const resultImage = await steganographyHide(coverImage, message);
             setStegoImage(resultImage);
         } catch (err: any) {
             setError(err.message || 'Failed to embed message.');
@@ -58,7 +58,7 @@ const ImageSteganography: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const resultMessage = await dctSteganographyReveal(imageToReveal);
+            const resultMessage = await steganographyReveal(imageToReveal);
             setRevealedMessage(resultMessage);
         } catch (err: any) {
             setError(err.message || 'Failed to extract message.');

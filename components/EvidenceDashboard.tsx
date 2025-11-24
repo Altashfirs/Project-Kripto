@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { EvidenceRecord } from '../types';
+import { decryptFromDatabase } from '../services/cryptoService';
 
 interface Props {
     username: string;
@@ -19,26 +20,38 @@ const EvidenceDashboard: React.FC<Props> = ({ username, onViewRecord }) => {
     const fetchRecords = async () => {
         if (!supabase) return;
         setLoading(true);
-        // We are assuming the table 'evidence_archives' exists now per the spec.
-        // If it fails, we handle gracefully.
         const { data, error } = await supabase
             .from('evidence_archives')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (!error && data) {
-            setRecords(data as EvidenceRecord[]);
+            // Melakukan dekripsi layer database untuk setiap field
+            const decryptedData = data.map((item: any) => ({
+                ...item,
+                agent_id: decryptFromDatabase(item.agent_id),
+                case_title: decryptFromDatabase(item.case_title),
+                classification_level: decryptFromDatabase(item.classification_level),
+                // Field di bawah ini memiliki enkripsi ganda (Logic + DB Layer)
+                // Kita hanya membuka layer DB di sini, layer Logic dibuka di Viewer
+                encrypted_description: decryptFromDatabase(item.encrypted_description),
+                encrypted_file_b64: decryptFromDatabase(item.encrypted_file_b64),
+                file_name: decryptFromDatabase(item.file_name),
+                file_rail_key_hint: decryptFromDatabase(item.file_rail_key_hint),
+                stego_image_b64: decryptFromDatabase(item.stego_image_b64)
+            }));
+            setRecords(decryptedData as EvidenceRecord[]);
         } else {
-            console.error("Failed to fetch evidence. Ensure 'evidence_archives' table exists.", error);
+            console.error("Gagal mengambil bukti.", error);
         }
         setLoading(false);
     };
 
     const getClassificationColor = (level: string) => {
         switch(level) {
-            case 'TOP SECRET': return 'text-alert-red border-alert-red';
-            case 'SECRET': return 'text-terminal-amber border-terminal-amber';
-            case 'CONFIDENTIAL': return 'text-blue-400 border-blue-400';
+            case 'SANGAT RAHASIA': return 'text-alert-red border-alert-red';
+            case 'RAHASIA': return 'text-terminal-amber border-terminal-amber';
+            case 'KONFIDENSIAL': return 'text-blue-400 border-blue-400';
             default: return 'text-gray-400 border-gray-400';
         }
     };
@@ -47,19 +60,19 @@ const EvidenceDashboard: React.FC<Props> = ({ username, onViewRecord }) => {
         <div className="max-w-6xl mx-auto animate-fade-in">
             <header className="mb-8 border-b border-agency-border pb-4 flex justify-between items-end">
                 <div>
-                    <h2 className="text-2xl text-white font-bold mb-1">CASE FILES DIRECTORY</h2>
-                    <p className="text-xs text-muted-text">CLASSIFIED MATERIAL // EYES ONLY</p>
+                    <h2 className="text-2xl text-white font-bold mb-1">DIREKTORI BERKAS KASUS</h2>
+                    <p className="text-xs text-muted-text">MATERI TERKLASIFIKASI // HANYA PENGLIHATAN SAJA</p>
                 </div>
-                <button onClick={fetchRecords} className="text-xs text-terminal-green hover:underline">[REFRESH DATA]</button>
+                <button onClick={fetchRecords} className="text-xs text-terminal-green hover:underline">[SEGARKAN DATA]</button>
             </header>
 
             {loading ? (
                 <div className="flex items-center justify-center h-64 text-terminal-green animate-pulse">
-                    ACCESSING DATABASE...
+                    MENGAKSES PANGKALAN DATA...
                 </div>
             ) : records.length === 0 ? (
                 <div className="border border-dashed border-agency-border p-12 text-center text-muted-text">
-                    NO ACTIVE CASES FOUND IN ARCHIVE.
+                    TIDAK ADA KASUS AKTIF DITEMUKAN DALAM ARSIP.
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -81,13 +94,13 @@ const EvidenceDashboard: React.FC<Props> = ({ username, onViewRecord }) => {
                                 </div>
                                 <div>
                                     <h3 className="text-white font-bold text-lg group-hover:text-terminal-green transition-colors">{record.case_title}</h3>
-                                    <p className="text-xs text-muted-text mt-1">FILED BY: AGENT {record.agent_id} // {new Date(record.created_at).toLocaleDateString()}</p>
+                                    <p className="text-xs text-muted-text mt-1">DILAPORKAN OLEH: AGEN {record.agent_id} // {new Date(record.created_at).toLocaleDateString('id-ID')}</p>
                                     <div className="flex gap-4 mt-3 text-[10px] text-gray-500 font-mono">
                                         <span className="flex items-center gap-1">
-                                            {record.encrypted_file_b64 ? '■ ASSET ATTACHED' : '□ NO ASSET'}
+                                            {record.encrypted_file_b64 ? '■ ASET LAMPIRAN' : '□ TANPA ASET'}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            {record.stego_image_b64 ? '■ STEGO LAYER' : '□ NO STEGO'}
+                                            {record.stego_image_b64 ? '■ LAPISAN STEGO' : '□ TANPA STEGO'}
                                         </span>
                                     </div>
                                 </div>

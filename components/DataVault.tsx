@@ -3,7 +3,7 @@ import Card from './Card';
 import Button from './Button';
 import Input from './Input';
 import { supabase } from '../services/supabaseClient';
-import { serpentMockEncrypt, serpentMockDecrypt } from '../services/cryptoService';
+import { superEncrypt, superDecrypt } from '../services/cryptoService';
 
 interface VaultItem {
     id: number;
@@ -73,7 +73,7 @@ const DataVault: React.FC<DataVaultProps> = ({ username }) => {
         setIsLoading(true);
 
         try {
-            const encrypted_content = await serpentMockEncrypt(textContent, secretKey);
+            const encrypted_content = await superEncrypt(textContent, secretKey);
 
             const { error: insertError } = await supabase.from('vault_items').insert({
                 username,
@@ -126,7 +126,7 @@ const DataVault: React.FC<DataVaultProps> = ({ username }) => {
             return;
         }
         try {
-            const decrypted = await serpentMockDecrypt(selectedItem.encrypted_content, decryptionKey);
+            const decrypted = await superDecrypt(selectedItem.encrypted_content, decryptionKey);
              // A simple check to see if decryption likely failed
             if (decrypted === selectedItem.encrypted_content) {
                 throw new Error("Decryption failed. The key is likely incorrect.");

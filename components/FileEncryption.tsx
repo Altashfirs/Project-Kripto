@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from './Card';
 import Button from './Button';
 import Input from './Input';
-import { elgamalEncrypt, elgamalDecrypt } from '../services/cryptoService';
+import { railFenceEncrypt, railFenceDecrypt } from '../services/cryptoService';
 
 const FileEncryption: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -42,8 +42,8 @@ const FileEncryption: React.FC = () => {
                 const isEncrypt = operation === 'encrypt';
 
                 const resultBytes = isEncrypt 
-                    ? await elgamalEncrypt(contentBytes, key) 
-                    : await elgamalDecrypt(contentBytes, key);
+                    ? await railFenceEncrypt(contentBytes, key) 
+                    : await railFenceDecrypt(contentBytes, key);
 
                 const blob = new Blob([resultBytes], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
