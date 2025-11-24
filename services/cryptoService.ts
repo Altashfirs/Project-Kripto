@@ -1,3 +1,4 @@
+
 // --- IMPORTANT ---
 // These functions are for educational and demonstration purposes only.
 // The mock functions are NOT cryptographically secure and should NOT be used in production.
@@ -298,3 +299,23 @@ export const dctSteganographyReveal = (imageUrl: string): Promise<string> => {
         img.src = imageUrl;
     });
 };
+
+// --- Helpers for Uint8Array <-> Base64 ---
+export const bytesToBase64 = (bytes: Uint8Array): string => {
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+}
+
+export const base64ToBytes = (base64: string): Uint8Array => {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+}

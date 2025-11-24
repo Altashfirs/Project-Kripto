@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -5,12 +6,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary', ...props }) => {
-    const baseStyle = "px-4 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200";
+    // CIA Theme Button Styles
+    const baseStyle = "px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed border";
     
     const variantStyles = {
-        primary: "bg-accent text-black hover:bg-accent/80 focus:ring-accent",
-        secondary: "bg-secondary border border-border-color text-text-primary hover:bg-border-color focus:ring-accent",
-        danger: "bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 focus:ring-red-500"
+        primary: "bg-terminal-green/10 border-terminal-green text-terminal-green hover:bg-terminal-green hover:text-black focus:ring-1 focus:ring-terminal-green",
+        secondary: "bg-transparent border-agency-border text-muted-text hover:border-white hover:text-white focus:ring-1 focus:ring-white",
+        danger: "bg-alert-red/10 border-alert-red text-alert-red hover:bg-alert-red hover:text-white focus:ring-1 focus:ring-alert-red"
     };
 
     return (

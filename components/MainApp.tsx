@@ -1,73 +1,91 @@
+
 import React, { useState } from 'react';
-import TextEncryption from './TextEncryption';
-import FileEncryption from './FileEncryption';
-import ImageSteganography from './ImageSteganography';
-import DataVault from './DataVault';
-import Button from './Button';
+import EvidenceDashboard from './EvidenceDashboard';
+import EvidenceIngestion from './EvidenceIngestion';
+import EvidenceViewer from './EvidenceViewer';
+import { EvidenceRecord } from '../types';
 
 interface MainAppProps {
     username: string;
     onLogout: () => void;
 }
 
-type Tab = 'vault' | 'text' | 'file' | 'steganography';
+type ViewState = 'DASHBOARD' | 'INGEST' | 'VIEW';
 
 const MainApp: React.FC<MainAppProps> = ({ username, onLogout }) => {
-    const [activeTab, setActiveTab] = useState<Tab>('vault');
+    const [view, setView] = useState<ViewState>('DASHBOARD');
+    const [selectedRecord, setSelectedRecord] = useState<EvidenceRecord | null>(null);
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'vault':
-                return <DataVault username={username} />;
-            case 'text':
-                return <TextEncryption />;
-            case 'file':
-                return <FileEncryption />;
-            case 'steganography':
-                return <ImageSteganography />;
-            default:
-                return null;
-        }
+    const handleViewRecord = (record: EvidenceRecord) => {
+        setSelectedRecord(record);
+        setView('VIEW');
     };
 
-    const tabStyle = (tab: Tab) => activeTab === tab
-        ? 'border-accent text-accent'
-        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-color';
+    const handleBackToDashboard = () => {
+        setSelectedRecord(null);
+        setView('DASHBOARD');
+    };
 
     return (
-        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-            <header className="flex justify-between items-center mb-6">
+        <div className="min-h-screen bg-agency-black text-gray-300 font-mono flex flex-col md:flex-row">
+            {/* Sidebar / Navigation */}
+            <aside className="w-full md:w-64 bg-agency-gray border-b md:border-b-0 md:border-r border-agency-border flex flex-col justify-between shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">CipherCom Terminal</h1>
-                    <p className="text-text-secondary">Operator <span className="text-accent">{username}</span> online.</p>
+                    <div className="p-6 border-b border-agency-border">
+                        <h1 className="text-xl font-bold text-white tracking-widest">ARCHIVE</h1>
+                        <p className="text-xs text-terminal-green mt-1">SECURE CONNECTION ESTABLISHED</p>
+                    </div>
+                    
+                    <nav className="p-4 space-y-2">
+                        <button 
+                            onClick={() => setView('DASHBOARD')}
+                            className={`w-full text-left px-4 py-3 text-sm border-l-2 transition-colors ${view === 'DASHBOARD' ? 'border-terminal-green bg-agency-black text-white' : 'border-transparent text-muted-text hover:text-white hover:bg-agency-black/50'}`}
+                        >
+                            > CASE FILES
+                        </button>
+                         <button 
+                            onClick={() => setView('INGEST')}
+                            className={`w-full text-left px-4 py-3 text-sm border-l-2 transition-colors ${view === 'INGEST' ? 'border-terminal-green bg-agency-black text-white' : 'border-transparent text-muted-text hover:text-white hover:bg-agency-black/50'}`}
+                        >
+                            > SUBMIT EVIDENCE
+                        </button>
+                        <div className="mt-8 px-4 text-[10px] text-muted-text uppercase tracking-widest">
+                            Agency Tools
+                        </div>
+                        <div className="px-4 py-2 text-xs text-gray-500">
+                             Encryption Protocols: <span className="text-terminal-amber">ACTIVE</span>
+                        </div>
+                    </nav>
                 </div>
-                <Button onClick={onLogout} variant="secondary">Logout</Button>
-            </header>
 
-            <div className="border-b border-border-color mb-8">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                    <button onClick={() => setActiveTab('vault')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${tabStyle('vault')}`}>
-                        Dead Drop
+                <div className="p-4 border-t border-agency-border">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded bg-agency-black border border-agency-border flex items-center justify-center">
+                            <span className="text-xs font-bold text-white">{username.substring(0,2).toUpperCase()}</span>
+                        </div>
+                        <div>
+                            <p className="text-xs text-white">AGENT {username}</p>
+                            <p className="text-[10px] text-terminal-green">CLEARANCE LEVEL 4</p>
+                        </div>
+                    </div>
+                    <button onClick={onLogout} className="w-full border border-alert-red/30 text-alert-red/80 hover:bg-alert-red/10 text-xs py-2 transition-colors uppercase">
+                        Terminate Session
                     </button>
-                    <button onClick={() => setActiveTab('text')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${tabStyle('text')}`}>
-                        Encrypted Channel
-                    </button>
-                    <button onClick={() => setActiveTab('file')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${tabStyle('file')}`}>
-                        File Obfuscation
-                    </button>
-                    <button onClick={() => setActiveTab('steganography')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${tabStyle('steganography')}`}>
-                        Steganography Protocol
-                    </button>
-                </nav>
-            </div>
+                </div>
+            </aside>
 
-            <main>
-                {renderContent()}
+            {/* Main Content Area */}
+            <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-grid-pattern bg-[length:40px_40px]">
+                {view === 'DASHBOARD' && (
+                    <EvidenceDashboard username={username} onViewRecord={handleViewRecord} />
+                )}
+                {view === 'INGEST' && (
+                    <EvidenceIngestion username={username} onComplete={handleBackToDashboard} />
+                )}
+                {view === 'VIEW' && selectedRecord && (
+                    <EvidenceViewer record={selectedRecord} onBack={handleBackToDashboard} />
+                )}
             </main>
-
-            <footer className="text-center mt-12 text-text-secondary text-sm">
-                <p>CipherCom simulation. Cryptographic implementations are for demonstration purposes only and are not secure for real-world use.</p>
-            </footer>
         </div>
     );
 };
