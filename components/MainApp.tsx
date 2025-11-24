@@ -41,13 +41,13 @@ const MainApp: React.FC<MainAppProps> = ({ username, onLogout }) => {
                             onClick={() => setView('DASHBOARD')}
                             className={`w-full text-left px-4 py-3 text-sm border-l-2 transition-colors ${view === 'DASHBOARD' ? 'border-terminal-green bg-agency-black text-white' : 'border-transparent text-muted-text hover:text-white hover:bg-agency-black/50'}`}
                         >
-                            > CASE FILES
+                            CASE FILES
                         </button>
                          <button 
                             onClick={() => setView('INGEST')}
                             className={`w-full text-left px-4 py-3 text-sm border-l-2 transition-colors ${view === 'INGEST' ? 'border-terminal-green bg-agency-black text-white' : 'border-transparent text-muted-text hover:text-white hover:bg-agency-black/50'}`}
                         >
-                            > SUBMIT EVIDENCE
+                            SUBMIT EVIDENCE
                         </button>
                         <div className="mt-8 px-4 text-[10px] text-muted-text uppercase tracking-widest">
                             Agency Tools
