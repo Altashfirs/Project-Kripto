@@ -1,124 +1,129 @@
-# CipherCom: Secure Comms - Documentation
 
-## 1. Overview
+# BIV // ARSIP DIGITAL (Digital Evidence Archive)
 
-CipherCom is a web application that implements various client-side cryptographic and data concealment techniques. It provides a platform for secure communications, featuring user authentication, encrypted messaging, file obfuscation, and steganography.
+![Status](https://img.shields.io/badge/STATUS-OPERATIONAL-success?style=for-the-badge&logo=shield)
+![Security](https://img.shields.io/badge/SECURITY-MAXIMUM-red?style=for-the-badge&logo=lock)
+![Agency](https://img.shields.io/badge/AGENCY-BIV_INDONESIA-gold?style=for-the-badge)
 
-The project serves as a functional showcase of these security methods within a React application.
-
-## 🚨 Security Warning
-
-**This application is for demonstration and educational purposes ONLY.** The cryptographic algorithms implemented are classical and are not considered secure by modern standards. **DO NOT use this code or these techniques to protect sensitive real-world data.**
+> **PERINGATAN:** AKSES TIDAK SAH KE TERMINAL INI ADALAH TINDAKAN ILEGAL.
+> Sistem ini dirancang untuk **Badan Intelejen Veteran (BIV)** guna mengelola, mengenkripsi, dan menyembunyikan bukti kasus sensitif menggunakan teknik kriptografi sisi-klien tingkat lanjut.
 
 ---
 
-## 2. Features
+## 📋 Ikhtisar Misi
 
-The application is divided into two main parts: an access portal and the main terminal with several modules.
+**Arsip Digital BIV** adalah aplikasi tingkat produksi yang dirancang untuk mendemonstrasikan "Rantai Bukti Digital" dengan keamanan tinggi. Berbeda dengan sistem penyimpanan standar, aplikasi ini beroperasi pada arsitektur **Trust-No-One (TNO)**.
 
-### 2.1. Secure Access (Login)
+Semua data intelijen—laporan teks, file digital, dan metadata klasifikasi—dienkripsi di **sisi-klien (browser)** sebelum menyentuh jaringan. Server (Supabase) hanya menyimpan ciphertext yang tidak bermakna. Kunci dekripsi tidak pernah disimpan; kunci tersebut ditanamkan ke dalam "Gambar Sampul" menggunakan steganografi, mengharuskan agen memiliki file fisik spesifik tersebut untuk membuka kembali arsip.
 
-Users can authenticate using one of two methods:
+## 🛡️ Arsitektur Keamanan
 
-*   **Web3 Access (Wallet):** Leverages a Web3 wallet like MetaMask to authenticate. The user signs a unique message, and their identity is verified using their wallet address without exposing private keys. This demonstrates passwordless, decentralized identity verification.
-*   **Password Access:** A traditional username and password system.
-    *   **Registration:** A new user's password is combined with a static salt and hashed using the **SHA-384** algorithm. The resulting hash is stored in a Supabase database.
-    *   **Login:** The user provides their credentials. The password is re-hashed locally using SHA-384 and compared against the stored hash to grant access.
+Sistem menggunakan **Protokol Kriptografi Berlapis**:
 
-### 2.2. CipherCom Terminal (Main App)
+### 1. Lapisan Logika (Sisi-Klien)
+Sebelum persiapan data, bukti melewati algoritma spesifik berdasarkan jenisnya:
 
-Once authenticated, the user enters the main terminal, which is a tabbed interface providing access to the following modules:
+*   **Laporan Intelijen (Teks):**
+    *   **Algoritma:** `SuperEncrypt` (Implementasi Khusus).
+    *   **Alur:** Plaintext $\rightarrow$ **Atbash Cipher** (Substitusi) $\rightarrow$ **Vigenère Cipher** (Polialfabetik).
+    *   **Kunci:** Frasa sandi yang ditentukan pengguna.
 
-*   **Dead Drop (Data Vault):**
-    *   Allows users to store encrypted text messages in a shared database, associated with their user profile.
-    *   Messages are encrypted client-side with a user-provided key using the **Vigenère cipher** before being sent to the database. The key is never stored.
-    *   Users can decrypt their stored messages by providing the correct key.
-    *   Features a "Burn Message" option to permanently delete a message from the database.
+*   **Aset Digital (File/Biner):**
+    *   **Algoritma:** **Rail Fence Cipher** (Transposisi).
+    *   **Mekanisme:** Byte disebar melintasi "rel" (pola zig-zag) berdasarkan offset PIN numerik.
+    *   **Output:** Array byte teracak yang dienkode Base64.
 
-*   **Encrypted Channel (Text Encryption):**
-    *   A tool for point-to-point message encryption.
-    *   Uses a "Super Encryption" technique that combines two ciphers: the **Atbash cipher** (a simple substitution cipher) followed by the **Vigenère cipher**.
-    *   Users can encrypt and decrypt text and easily swap the input/output for quick conversation flow.
+*   **Transportasi Kunci (Steganografi):**
+    *   **Algoritma:** **LSB (Least Significant Bit)**.
+    *   **Mekanisme:** Kunci dekripsi untuk laporan teks diubah menjadi biner dan disuntikkan ke dalam bit paling tidak signifikan dari saluran Biru dan Hijau pada "Gambar Sampul".
+    *   **Hasil:** File PNG yang terlihat identik dengan aslinya tetapi berisi "kunci kerajaan".
 
-*   **File Obfuscation (File Encryption):**
-    *   Encrypts and decrypts entire files using a byte-wise implementation of the **Rail Fence cipher**.
-    *   This is a classic transposition cipher that writes data in a zig-zag pattern across a number of "rails" (defined by the numeric key).
-    *   The file is processed as a byte array, allowing it to work on any file type. The encrypted file is downloaded with a `.rfc` extension.
+### 2. Lapisan Database (Global)
+Untuk memastikan administrator database tidak dapat membaca bahkan metadata sekalipun, lapisan kedua diterapkan segera sebelum transmisi jaringan:
 
-*   **Steganography Protocol (Image Steganography):**
-    *   Hides data within an image file using the **Least Significant Bit (LSB)** technique.
-    *   **Embed:** A secret text message is converted to binary and hidden within the pixel data of a "cover" image. The algorithm modifies the last bit of the **green and blue color channels** of each pixel to store the message bits.
-    *   **Extract:** The algorithm reads the LSBs from the green and blue channels of a "stego" image to reveal the hidden message.
+*   **Algoritma:** **Vigenère Cipher** (Kunci Global Agensi).
+*   **Lingkup:** Diterapkan pada `agent_id`, `case_title`, `classification`, dan payload yang sudah dienkripsi sebelumnya.
+*   **Kunci:** `DB_LAYER_KEY` (Variabel lingkungan hardcoded).
 
 ---
 
-## 3. Technology Stack
+## 🛠️ Tumpukan Teknologi
 
-*   **Frontend Framework:** React 19 (using `react` and `react-dom`)
-*   **Language:** TypeScript
-*   **Styling:** Tailwind CSS
-*   **Backend-as-a-Service (BaaS):** Supabase (for user accounts and data vault storage)
-*   **Web3 Integration:** Ethers.js (for wallet interaction)
-*   **Bundling/Modules:** ES Modules with `importmap` (no local build step required)
-
----
-
-## 4. Project Setup & Configuration
-
-This project is designed to run directly in a browser that supports ES Modules and `importmap`. The only external dependency that requires setup is Supabase.
-
-### 4.1. Supabase Setup
-
-To enable the "Password Access" and "Dead Drop" features, you must configure a Supabase project.
-
-1.  **Create a Supabase Project:**
-    *   Go to [supabase.com](https://supabase.com) and create a free project.
-    *   Navigate to your project's **Settings > API**.
-
-2.  **Update Client Configuration:**
-    *   Open the file `services/supabaseClient.ts`.
-    *   Replace the placeholder values for `supabaseUrl` and `supabaseKey` with your project's **Project URL** and **anon public key**.
-
-3.  **Create Database Tables:**
-    *   Go to the **Table Editor** in your Supabase dashboard.
-    *   Create two tables with the following schemas:
-
-    **Table 1: `users`**
-    (Used for storing Password Access credentials)
-
-    | Column           | Type      | Constraints                             |
-    | ---------------- | --------- | --------------------------------------- |
-    | `username`       | `text`    | Primary Key, Not Null                   |
-    | `created_at`     | `timestamptz` | Not Null, Default: `now()`            |
-    | `encrypted_hash` | `text`    | Not Null                                |
-
-    **Table 2: `vault_items`**
-    (Used for the Dead Drop feature)
-
-    | Column            | Type      | Constraints                             |
-    | ----------------- | --------- | --------------------------------------- |
-    | `id`              | `bigint`  | Primary Key, Identity                   |
-    | `created_at`      | `timestamptz` | Not Null, Default: `now()`            |
-    | `username`        | `text`    | Not Null, Foreign Key to `users.username` |
-    | `title`           | `text`    | Not Null                                |
-    | `data_type`       | `text`    | Not Null (e.g., 'text')                 |
-    | `encrypted_content` | `text`    | Not Null                                |
-
-    *Note: Ensure Row Level Security (RLS) is disabled for these tables for this demo. In a production app, you would configure RLS policies to restrict access.*
+| Komponen | Teknologi | Deskripsi |
+| :--- | :--- | :--- |
+| **Frontend** | React 19 + TypeScript | Pustaka UI performa tinggi. |
+| **Styling** | Tailwind CSS | CSS utility-first untuk estetika "Terminal Agensi". |
+| **Tipografi** | JetBrains Mono | Font monospaced untuk keterbacaan dan nuansa terminal. |
+| **Backend** | Supabase | Database Postgres dengan Row Level Security (RLS). |
+| **Otentikasi** | Ethers.js / Scrypt | Tanda tangan Dompet Web3 & Hashing password Scrypt. |
 
 ---
 
-## 5. Code Structure
+## 🚀 Instalasi & Pengaturan
 
-*   `/index.html`: The main entry point of the application. It includes the `importmap` for dependencies and loads the root React component.
-*   `/index.tsx`: Mounts the main `App` component to the DOM.
-*   `/App.tsx`: The root component that manages authentication state and switches between the `LoginPage` and `MainApp`.
-*   `/components/`: Contains all the reusable React components.
-    *   `LoginPage.tsx`: Handles both Web3 and password-based login/registration logic.
-    *   `MainApp.tsx`: The main application shell after login, including the tab navigation.
-    *   `DataVault.tsx`, `TextEncryption.tsx`, `FileEncryption.tsx`, `ImageSteganography.tsx`: The individual feature modules.
-    *   `Card.tsx`, `Button.tsx`, `Input.tsx`: Basic UI components for a consistent look and feel.
-*   `/services/`: Contains logic decoupled from the UI.
-    *   `cryptoService.ts`: Contains all the cryptographic and steganographic function implementations.
-    *   `supabaseClient.ts`: Initializes and exports the Supabase client instance.
-*   `/types.ts`: Defines shared TypeScript types and interfaces.
+### Prasyarat
+1.  Proyek [Supabase](https://supabase.com).
+2.  Browser Web Modern.
+
+### 1. Konfigurasi Database
+Jalankan SQL berikut di **Editor SQL** Supabase Anda untuk menyiapkan tabel bukti:
+
+```sql
+create table evidence_archives (
+  id bigint generated by default as identity primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  agent_id text not null,               -- Terenkripsi
+  case_title text not null,             -- Terenkripsi
+  classification_level text not null,   -- Terenkripsi
+  encrypted_description text not null,  -- Enkripsi Ganda
+  encrypted_file_b64 text,              -- Enkripsi Ganda
+  file_name text,                       -- Terenkripsi
+  file_rail_key_hint text,              -- Terenkripsi
+  stego_image_b64 text                  -- Base64 DataURL
+);
+
+create table users (
+  username text primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  encrypted_hash text not null
+);
+```
+
+### 2. Konfigurasi Lingkungan
+Buka `services/supabaseClient.ts` dan perbarui dengan kredensial Anda:
+
+```typescript
+const supabaseUrl: string = 'URL_PROYEK_SUPABASE_ANDA';
+const supabaseKey: string = 'KUNCI_ANON_SUPABASE_ANDA';
+```
+
+---
+
+## 🕹️ Manual Operasional
+
+### A. Otentikasi
+*   **Metode 1 (Kata Sandi):** Daftarkan ID Veteran baru. Sistem melakukan hashing password menggunakan `Scrypt` + `Salt`.
+*   **Metode 2 (Wallet):** Gunakan MetaMask. Sistem meminta tanda tangan kriptografi untuk memverifikasi alamat tanpa mengekspos kunci pribadi.
+
+### B. Pelaporan Bukti (Ingestion)
+1.  **Intel:** Masukkan judul kasus dan laporan sensitif. Tetapkan Frasa Sandi.
+2.  **Aset:** Unggah file (PDF/Img). Tetapkan PIN Numerik (Kunci Rail).
+3.  **Transportasi:** Unggah "Gambar Sampul" umum.
+4.  **Finalisasi:** Sistem mengenkripsi segalanya, menanamkan kunci ke dalam gambar, mengunggah ke Supabase, dan **mengunduh otomatis** Gambar-Stego.
+    *   *Catatan: Anda HARUS menyimpan gambar yang diunduh ini. Ini adalah satu-satunya cara untuk membuka kembali file nanti.*
+
+### C. Pengambilan Bukti (Direktori)
+1.  Pilih kasus dari Dashboard.
+2.  **Buka Teks:** Unggah Gambar-Stego yang telah diunduh sebelumnya. Sistem mengekstrak kunci tersembunyi dan mendekripsi laporan.
+3.  **Buka File:** Masukkan PIN Numerik (Kunci Rail) untuk mengurutkan ulang byte dan mengunduh file asli.
+
+### D. Pemusnahan Aman (Deletion)
+1.  Klik "MUSNAHKAN BERKAS".
+2.  **Verifikasi:**
+    *   Jika login via Password: Masukkan ulang password (cek hash).
+    *   Jika login via Wallet: Tanda tangani pesan "Konfirmasi Penghapusan" via MetaMask.
+3.  Data dihapus secara permanen dari server.
+
+---
+
+**© 2024 PROYEK RUMAH KACA // BIV INDONESIA**

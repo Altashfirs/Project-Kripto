@@ -101,7 +101,7 @@ const EvidenceViewer: React.FC<Props> = ({ record, username, authMethod, onBack 
                     .eq('username', username)
                     .single();
                 
-                const SALT = "bin-static-salt-nusantara-2024";
+                const SALT = "biv-static-salt-veteran-2024"; // SALT yang diperbarui untuk BIV
                 const inputHash = await deriveKeyScrypt(deleteInput, SALT);
 
                 if (!user || user.encrypted_hash !== inputHash) {

@@ -23,7 +23,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const SALT = "bin-static-salt-nusantara-2024";
+    const SALT = "biv-static-salt-veteran-2024";
 
     // --- Login Web3 (Dompet Digital) ---
     const handleWeb3Login = async () => {
@@ -41,12 +41,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             const signer = await provider.getSigner();
             const address = await signer.getAddress();
             const nonce = new Date().getTime();
-            const messageToSign = `PERMINTAAN AKSES AGENSI\n\nVERIFIKASI IDENTITAS DIPERLUKAN.\n\nTIMESTAMP: ${nonce}`;
+            const messageToSign = `PERMINTAAN AKSES AGENSI BIV\n\nVERIFIKASI IDENTITAS DIPERLUKAN.\n\nTIMESTAMP: ${nonce}`;
             const signature = await signer.signMessage(messageToSign);
             const recoveredAddress = ethers.verifyMessage(messageToSign, signature);
 
             if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
-                const shortAddress = `AGEN-${address.substring(0, 6)}`;
+                const shortAddress = `VETERAN-${address.substring(0, 6)}`;
                 onLoginSuccess(shortAddress, 'WALLET');
             } else {
                 setError('VERIFIKASI GAGAL: Tanda tangan biometrik tidak valid.');
@@ -86,7 +86,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     .single();
 
                 if (selectError && selectError.code !== 'PGRST116') throw selectError;
-                if (existingUser) throw new Error('KONFLIK IDENTITAS: Nomer Agen sudah aktif.');
+                if (existingUser) throw new Error('KONFLIK IDENTITAS: Nomer Veteran sudah aktif.');
 
                 const scryptHash = await deriveKeyScrypt(password, SALT);
                 
@@ -96,7 +96,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 
                 if (insertError) throw insertError;
 
-                setSuccessMessage('IZIN DIBERIKAN: Identitas terdaftar. Silakan masuk.');
+                setSuccessMessage('IZIN DIBERIKAN: Identitas Veteran terdaftar. Silakan masuk.');
                 setMode('login');
                 setPassword('');
 
@@ -107,7 +107,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     .eq('username', username)
                     .single();
 
-                if (selectError || !user) throw new Error('AKSES DITOLAK: Identitas Agen tidak ditemukan.');
+                if (selectError || !user) throw new Error('AKSES DITOLAK: Identitas Veteran tidak ditemukan.');
                 
                 const storedHash = user.encrypted_hash;
                 const scryptHashToCompare = await deriveKeyScrypt(password, SALT);
@@ -135,13 +135,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                             <div className="absolute inset-0 bg-terminal-amber/20 blur-xl rounded-full transform scale-75"></div>
                             <img 
                                 src="https://img.inews.co.id/media/600/files/inews_new/2020/05/27/bin_logo_ist.jpg" 
-                                alt="Lambang BIN" 
-                                className="w-32 h-32 object-contain relative z-10 rounded-full border-2 border-agency-border/50 shadow-[0_0_20px_rgba(255,215,0,0.15)]" 
+                                alt="Lambang BIV" 
+                                className="w-32 h-32 object-contain relative z-10 rounded-full border-2 border-agency-border/50 shadow-[0_0_20px_rgba(255,215,0,0.15)] grayscale-[0.2] contrast-125" 
                             />
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-widest mb-1">B.I.N.</h1>
-                        <p className="text-xs text-muted-text uppercase tracking-[0.2em]">BADAN INTELIJEN NEGARA</p>
-                        <p className="text-[10px] text-terminal-amber mt-2">TERMINAL AMAN // HANYA PERSONEL BERWENANG</p>
+                        <h1 className="text-3xl font-bold text-white tracking-widest mb-1">B.I.V.</h1>
+                        <p className="text-xs text-muted-text uppercase tracking-[0.2em]">BADAN INTELEJEN VETERAN</p>
+                        <p className="text-[10px] text-terminal-amber mt-2">TERMINAL VETERAN // HANYA PERSONEL BERWENANG</p>
                     </div>
 
                     {error && (
@@ -157,7 +157,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
                     <form onSubmit={handlePasswordSubmit} className="space-y-5">
                         <div className="relative group">
-                            <label className="text-[10px] uppercase text-muted-text absolute -top-2 left-2 bg-agency-gray px-1 group-focus-within:text-terminal-green transition-colors">ID Agen</label>
+                            <label className="text-[10px] uppercase text-muted-text absolute -top-2 left-2 bg-agency-gray px-1 group-focus-within:text-terminal-green transition-colors">ID Veteran</label>
                             <input 
                                 type="text" 
                                 value={username}
@@ -182,7 +182,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                                 {mode === 'login' ? 'Otentikasi' : 'Daftar ID Baru'}
                             </button>
                             <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="px-3 border border-agency-border text-muted-text hover:text-white hover:border-white transition-colors text-xs uppercase">
-                                {mode === 'login' ? 'Agen Baru?' : 'Batal'}
+                                {mode === 'login' ? 'Veteran Baru?' : 'Batal'}
                             </button>
                         </div>
                     </form>
@@ -200,7 +200,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <div className="bg-agency-black px-4 py-2 flex justify-between text-[9px] text-muted-text font-mono border-t border-agency-border">
                     <span>STATUS_SIS: ONLINE</span>
                     <span>ENKRIPSI: VIGENERE-LAYERED</span>
-                    <span>V.3.1.0-ID</span>
+                    <span>V.3.1.2-BIV</span>
                 </div>
             </div>
         </div>

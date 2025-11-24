@@ -1,10 +1,11 @@
+
 // --- MODUL KRIPTOGRAFI KLIEN ---
 // Modul ini menangani operasi enkripsi/dekripsi secara lokal di browser.
 // CATATAN KEAMANAN: Implementasi ini untuk tujuan demonstrasi arsitektur sistem.
 
 // KUNCI LAPISAN DATABASE (Hardcoded untuk demo klien, di produksi harus di server-side)
 // Semua data yang masuk ke database dibungkus dengan kunci ini.
-const DB_LAYER_KEY = "BHINNEKATUNGGALIKA"; 
+const DB_LAYER_KEY = "VETERANMERDEKAATAUMATI"; 
 
 /**
  * Derivasi Kunci (Scrypt Implementation)
